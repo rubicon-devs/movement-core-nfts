@@ -6,7 +6,7 @@ A community-driven voting platform for selecting the top NFT collections on Move
 
 ## Features
 
-- **Monthly Voting Cycles**: Submit collections (days 1-7), vote (days 8-14), view winners (days 15+)
+- **Monthly Voting Cycles**: Submit collections, vote, view winners
 - **Discord Authentication**: Login with Discord, role-based access control
 - **Tradeport Integration**: Validates collections against Tradeport's verified list
 - **Admin Dashboard**: Manage phases, calculate winners, export data, block users
@@ -33,8 +33,8 @@ A community-driven voting platform for selecting the top NFT collections on Move
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/movement-core-collections.git
-   cd movement-core-collections
+   git clone https://github.com/YOUR_USERNAME/movement-core-nfts.git
+   cd movement-core-nfts
    ```
 
 2. Install dependencies:
@@ -72,11 +72,16 @@ A community-driven voting platform for selecting the top NFT collections on Move
 
 ## Phase Schedule
 
-| Phase | Days | Description |
-|-------|------|-------------|
-| Submission | 1-7 | Users submit NFT collections |
-| Voting | 8-14 | Users vote for their favorites (max 5 votes) |
-| Display | 15-31 | Top 15 winners are displayed |
+| Phase | Timing | Duration | Description |
+|-------|--------|----------|-------------|
+| Submission | 8 days before end of month | 3 days | Users submit NFT collections |
+| Voting | 5 days before end of month | 4 days | Users vote for their favorites (max 5 votes) |
+| Display | Last day of month onwards | Until next submission | Top 15 winners are displayed |
+
+**Example for a 31-day month:**
+- Submission: Days 24-26
+- Voting: Days 27-30
+- Display: Day 31 through Day 23 of next month
 
 Admins can override phases manually from the admin dashboard.
 
