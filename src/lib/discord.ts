@@ -1,7 +1,7 @@
 // Discord OAuth configuration
 const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID!
 const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET!
-const DISCORD_REDIRECT_URI = process.env.NEXTAUTH_URL + '/api/auth/callback'
+const DISCORD_REDIRECT_URI = process.env.DISCORD_REDIRECT_URI || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}/api/auth/callback` : 'http://localhost:3000/api/auth/callback')
 const MOVEMENT_GUILD_ID = process.env.DISCORD_GUILD_ID || ''
 const ADMIN_DISCORD_IDS = process.env.ADMIN_DISCORD_IDS?.split(',').map(id => id.trim()).filter(Boolean) || []
 const ALLOWED_ROLE_IDS = process.env.ALLOWED_ROLE_IDS?.split(',').map(id => id.trim()).filter(Boolean) || []
