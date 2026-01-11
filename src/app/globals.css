@@ -1,0 +1,407 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --movement-yellow: #facc15;
+  --movement-black: #0a0a0a;
+}
+
+/* Base styles */
+@layer base {
+  body {
+    @apply bg-movement-black text-white antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  
+  /* Grid pattern background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(250, 204, 21, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(250, 204, 21, 0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: -1;
+  }
+}
+
+/* Component styles */
+@layer components {
+  /* Cards with glow effect */
+  .card {
+    @apply bg-movement-gray-900/80 border border-movement-gray-800 rounded-xl backdrop-blur-sm;
+    position: relative;
+    transition: all 0.3s ease;
+  }
+  
+  .card::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    background: linear-gradient(
+      135deg,
+      transparent 0%,
+      rgba(250, 204, 21, 0) 40%,
+      rgba(250, 204, 21, 0.1) 50%,
+      rgba(250, 204, 21, 0) 60%,
+      transparent 100%
+    );
+    border-radius: inherit;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: -1;
+  }
+  
+  .card:hover::before {
+    opacity: 1;
+  }
+  
+  .card:hover {
+    @apply border-movement-gray-700;
+    box-shadow: 0 0 30px rgba(250, 204, 21, 0.05);
+  }
+  
+  /* Glow card variant - more pronounced effect */
+  .card-glow {
+    @apply bg-movement-gray-900/80 border border-movement-gray-800 rounded-xl;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .card-glow::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: conic-gradient(
+      from 0deg,
+      transparent,
+      rgba(250, 204, 21, 0.1),
+      transparent 30%
+    );
+    animation: rotate-glow 8s linear infinite;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+  
+  .card-glow:hover::before {
+    opacity: 1;
+  }
+  
+  .card-glow-inner {
+    @apply relative bg-movement-gray-900 rounded-xl h-full;
+  }
+  
+  @keyframes rotate-glow {
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+  
+  /* Phase banner - static border */
+  .phase-banner {
+    position: relative;
+  }
+  
+  .phase-banner-submission {
+    --phase-color: rgba(59, 130, 246, 0.3);
+  }
+  
+  .phase-banner-voting {
+    --phase-color: rgba(250, 204, 21, 0.3);
+  }
+  
+  .phase-banner-display {
+    --phase-color: rgba(34, 197, 94, 0.3);
+  }
+  
+  /* Buttons */
+  .btn-primary {
+    @apply px-4 py-2 bg-movement-yellow text-movement-black font-semibold rounded-lg;
+    @apply hover:bg-yellow-400 active:bg-yellow-500;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply transition-all duration-200;
+    @apply shadow-lg shadow-movement-yellow/20 hover:shadow-movement-yellow/30;
+  }
+  
+  .btn-secondary {
+    @apply px-4 py-2 bg-movement-gray-800 text-white font-semibold rounded-lg;
+    @apply border border-movement-gray-700;
+    @apply hover:bg-movement-gray-700 hover:border-movement-gray-600;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply transition-all duration-200;
+  }
+  
+  .btn-ghost {
+    @apply px-4 py-2 text-movement-gray-400 font-medium rounded-lg;
+    @apply hover:text-white hover:bg-movement-gray-800;
+    @apply transition-all duration-200;
+  }
+  
+  /* Input fields */
+  .input {
+    @apply w-full px-4 py-3 bg-movement-gray-900 border border-movement-gray-700 rounded-lg;
+    @apply text-white placeholder-movement-gray-500;
+    @apply focus:outline-none focus:border-movement-yellow focus:ring-1 focus:ring-movement-yellow/30;
+    @apply transition-all duration-200;
+  }
+  
+  /* Badges */
+  .badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium;
+  }
+  
+  .badge-yellow {
+    @apply bg-movement-yellow/20 text-movement-yellow border border-movement-yellow/30;
+  }
+  
+  .badge-blue {
+    @apply bg-blue-500/20 text-blue-400 border border-blue-500/30;
+  }
+  
+  .badge-green {
+    @apply bg-green-500/20 text-green-400 border border-green-500/30;
+  }
+  
+  .badge-red {
+    @apply bg-red-500/20 text-red-400 border border-red-500/30;
+  }
+}
+
+/* Spotlight effect for hero sections */
+.spotlight {
+  position: relative;
+}
+
+.spotlight::before {
+  content: '';
+  position: absolute;
+  width: 800px;
+  height: 600px;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(250, 204, 21, 0.12) 0%,
+    rgba(250, 204, 21, 0.05) 30%,
+    transparent 70%
+  );
+  top: -300px;
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Floating particles animation (optional - for celebrations) */
+@keyframes float-up {
+  0% {
+    transform: translateY(100vh) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.6;
+  }
+  90% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateY(-100vh) rotate(720deg);
+    opacity: 0;
+  }
+}
+
+.particle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: var(--movement-yellow);
+  border-radius: 50%;
+  animation: float-up 15s linear infinite;
+  pointer-events: none;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--movement-black);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #444;
+}
+
+/* Selection color */
+::selection {
+  background: rgba(250, 204, 21, 0.3);
+  color: white;
+}
+
+/* Text gradient shimmer effect */
+.text-gradient-shimmer {
+  background: linear-gradient(
+    90deg,
+    #facc15 0%,
+    #fef08a 25%,
+    #facc15 50%,
+    #f59e0b 75%,
+    #facc15 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer-text 3s linear infinite;
+}
+
+@keyframes shimmer-text {
+  0% {
+    background-position: 0% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+/* Vote count animation */
+.vote-count {
+  display: inline-block;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.vote-count:hover {
+  transform: scale(1.1);
+}
+
+/* Vote button styles */
+.vote-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.vote-btn-inactive {
+  background: rgba(250, 204, 21, 0.1);
+  border: 1px solid rgba(250, 204, 21, 0.3);
+  color: #facc15;
+}
+
+.vote-btn-inactive:hover {
+  background: rgba(250, 204, 21, 0.2);
+  border-color: rgba(250, 204, 21, 0.5);
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(250, 204, 21, 0.2);
+}
+
+.vote-btn-active {
+  background: #facc15;
+  color: #0a0a0a;
+  border: 1px solid #facc15;
+}
+
+.vote-btn-disabled {
+  background: rgba(107, 114, 128, 0.1);
+  border: 1px solid rgba(107, 114, 128, 0.3);
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+/* Smooth transitions for theme elements */
+* {
+  scroll-behavior: smooth;
+}
+
+/* Rank badges with glow */
+.rank-badge {
+  @apply relative;
+}
+
+.rank-badge-gold {
+  box-shadow: 0 0 20px rgba(250, 204, 21, 0.4);
+}
+
+.rank-badge-silver {
+  box-shadow: 0 0 15px rgba(192, 192, 192, 0.3);
+}
+
+.rank-badge-bronze {
+  box-shadow: 0 0 15px rgba(205, 127, 50, 0.3);
+}
+
+/* Loading shimmer effect */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 25%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.05) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Glassmorphism utility */
+.glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Vote button pulse animation */
+@keyframes pulse-vote {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(250, 204, 21, 0);
+  }
+}
+
+.vote-btn-pulse {
+  animation: pulse-vote 2s ease-in-out infinite;
+}
+
+/* Success animation */
+@keyframes success-pop {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.success-animation {
+  animation: success-pop 0.4s ease-out forwards;
+}

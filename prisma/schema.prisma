@@ -1,0 +1,102 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  discordId String   @unique
+  username  String
+  email     String?
+  avatar    String?
+  roles     String[]
+  isAdmin   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  submissions Submission[]
+  votes       Vote[]
+}
+
+model Collection {
+  id              String   @id @default(cuid())
+  contractAddress String   @unique
+  name            String
+  imageUrl        String?
+  description     String?
+  twitterUrl      String?
+  tradeportUrl    String?
+  floorPrice      Float?
+  volume          Float?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  submissions Submission[]
+  votes       Vote[]
+  winners     Winner[]
+}
+
+model Submission {
+  id           String   @id @default(cuid())
+  collectionId String
+  userId       String
+  monthYear    String
+  createdAt    DateTime @default(now())
+
+  collection Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id])
+
+  @@unique([collectionId, monthYear])
+  @@index([monthYear])
+  @@index([userId, monthYear])
+}
+
+model Vote {
+  id           String   @id @default(cuid())
+  collectionId String
+  userId       String
+  monthYear    String
+  createdAt    DateTime @default(now())
+
+  collection Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id])
+
+  @@unique([collectionId, userId, monthYear])
+  @@index([monthYear])
+  @@index([userId, monthYear])
+}
+
+model Winner {
+  id           String   @id @default(cuid())
+  collectionId String
+  monthYear    String
+  rank         Int
+  voteCount    Int
+  createdAt    DateTime @default(now())
+
+  collection Collection @relation(fields: [collectionId], references: [id])
+
+  @@unique([collectionId, monthYear])
+  @@index([monthYear])
+}
+
+model PhaseOverride {
+  id        String    @id @default(cuid())
+  monthYear String    @unique
+  phase     String
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model BlockedUser {
+  id        String   @id @default(cuid())
+  discordId String   @unique
+  reason    String?
+  blockedBy String
+  createdAt DateTime @default(now())
+}
