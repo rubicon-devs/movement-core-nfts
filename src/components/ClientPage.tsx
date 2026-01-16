@@ -129,12 +129,16 @@ function PhaseBanner({ phase, timeRemaining }: { phase: PhaseInfo; timeRemaining
   }
 
   // Calculate progress percentage and day info
+  // Phase durations:
+  // - Submission: 3 days (days 24-26 in a 31-day month)
+  // - Voting: 4 days (days 27-30 in a 31-day month)
+  // - Display: ~23 days (last day of month through day 23 of next month)
   const getPhaseDuration = () => {
     switch (phase.phase) {
-      case 'submission': return 7 * 24 * 60 * 60 * 1000 // 7 days
-      case 'voting': return 7 * 24 * 60 * 60 * 1000 // 7 days
-      case 'display': return 17 * 24 * 60 * 60 * 1000 // ~17 days
-      default: return 7 * 24 * 60 * 60 * 1000
+      case 'submission': return 3 * 24 * 60 * 60 * 1000 // 3 days
+      case 'voting': return 4 * 24 * 60 * 60 * 1000 // 4 days
+      case 'display': return 23 * 24 * 60 * 60 * 1000 // ~23 days
+      default: return 3 * 24 * 60 * 60 * 1000
     }
   }
 
@@ -142,7 +146,7 @@ function PhaseBanner({ phase, timeRemaining }: { phase: PhaseInfo; timeRemaining
   const elapsed = phaseDuration - timeRemaining
   const progressPercent = Math.min(100, Math.max(0, (elapsed / phaseDuration) * 100))
   const daysTotal = Math.ceil(phaseDuration / (24 * 60 * 60 * 1000))
-  const daysCurrent = Math.min(daysTotal, Math.ceil(elapsed / (24 * 60 * 60 * 1000)))
+  const daysCurrent = Math.max(1, Math.min(daysTotal, Math.ceil(elapsed / (24 * 60 * 60 * 1000))))
 
   return (
     <motion.div
