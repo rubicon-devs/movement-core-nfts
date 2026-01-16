@@ -538,7 +538,7 @@ export function ClientPage() {
 
       // Fetch winners if display phase
       if (phaseData.phase === 'display') {
-        const winnersRes = await fetch(`/api/admin?action=winners&monthYear=${phaseData.monthYear}`)
+        const winnersRes = await fetch(`/api/winners?monthYear=${phaseData.monthYear}`)
         if (winnersRes.ok) {
           const winnersData = await winnersRes.json()
           setWinners(winnersData.winners || [])
