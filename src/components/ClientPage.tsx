@@ -580,10 +580,21 @@ export function ClientPage() {
       })
 
       if (response.ok) {
-        setCollections(prev => prev.map(c => 
-          c.id === collectionId ? { ...c, voteCount: c.voteCount + 1, hasVoted: true } : c
-        ))
-        setUserVoteCount(prev => prev + 1)
+        const data = await response.json()
+        
+        if (data.action === 'added') {
+          // Vote was added
+          setCollections(prev => prev.map(c => 
+            c.id === collectionId ? { ...c, voteCount: c.voteCount + 1, hasVoted: true } : c
+          ))
+          setUserVoteCount(prev => prev + 1)
+        } else if (data.action === 'removed') {
+          // Vote was removed
+          setCollections(prev => prev.map(c => 
+            c.id === collectionId ? { ...c, voteCount: c.voteCount - 1, hasVoted: false } : c
+          ))
+          setUserVoteCount(prev => prev - 1)
+        }
       }
     } catch (error) {
       console.error('Vote error:', error)

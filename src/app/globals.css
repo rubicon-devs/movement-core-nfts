@@ -127,6 +127,7 @@
     @apply disabled:opacity-50 disabled:cursor-not-allowed;
     @apply transition-all duration-200;
     @apply shadow-lg shadow-movement-yellow/20 hover:shadow-movement-yellow/30;
+    @apply inline-flex items-center justify-center whitespace-nowrap;
   }
   
   .btn-secondary {
@@ -135,12 +136,14 @@
     @apply hover:bg-movement-gray-700 hover:border-movement-gray-600;
     @apply disabled:opacity-50 disabled:cursor-not-allowed;
     @apply transition-all duration-200;
+    @apply inline-flex items-center justify-center whitespace-nowrap;
   }
   
   .btn-ghost {
     @apply px-4 py-2 text-movement-gray-400 font-medium rounded-lg;
     @apply hover:text-white hover:bg-movement-gray-800;
     @apply transition-all duration-200;
+    @apply inline-flex items-center justify-center whitespace-nowrap;
   }
   
   /* Input fields */
@@ -287,14 +290,16 @@
 
 /* Vote button styles */
 .vote-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
   padding: 0.5rem 1rem;
   border-radius: 0.5rem;
   font-weight: 600;
   font-size: 0.875rem;
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 .vote-btn-inactive {
