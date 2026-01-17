@@ -393,7 +393,9 @@ function CollectionCard({
   const [isVoting, setIsVoting] = useState(false)
 
   const handleVote = async () => {
-    if (!canVote || isVoting || collection.hasVoted || userVoteCount >= MAX_VOTES) return
+    // Allow voting if: can vote AND (hasn't voted OR has voted to remove it) AND not at max (unless removing)
+    if (!canVote || isVoting) return
+    if (!collection.hasVoted && userVoteCount >= MAX_VOTES) return
     setIsVoting(true)
     await onVote(collection.id)
     setIsVoting(false)
@@ -484,11 +486,12 @@ function CollectionCard({
           {canVote && (
             <button
               onClick={handleVote}
-              disabled={isVoting || collection.hasVoted || userVoteCount >= MAX_VOTES}
+              disabled={isVoting || (!collection.hasVoted && userVoteCount >= MAX_VOTES)}
               className={`vote-btn ${
                 collection.hasVoted ? 'vote-btn-active' :
                 userVoteCount >= MAX_VOTES ? 'vote-btn-disabled' : 'vote-btn-inactive'
               }`}
+              title={collection.hasVoted ? 'Click to remove vote' : userVoteCount >= MAX_VOTES ? 'Remove a vote first' : 'Click to vote'}
             >
               {isVoting ? <Loader2 className="w-4 h-4 animate-spin" /> :
                collection.hasVoted ? <><Check className="w-4 h-4" /><span>Voted</span></> : <span>Vote</span>}
@@ -682,7 +685,7 @@ export function ClientPage() {
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                       <div>
                         <h3 className="text-lg font-semibold text-white">Your Votes</h3>
-                        <p className="text-sm text-movement-gray-400">You can vote for up to {MAX_VOTES} collections</p>
+                        <p className="text-sm text-movement-gray-400">Vote for up to {MAX_VOTES} collections. Click again to remove a vote.</p>
                       </div>
                       <div className="flex gap-2">
                         {[...Array(MAX_VOTES)].map((_, i) => (

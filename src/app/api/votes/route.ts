@@ -49,25 +49,39 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Collection ID is required' }, { status: 400 })
     }
 
-    // Check vote count
-    const existingVotes = await prisma.vote.count({
-      where: { userId: dbUser.id, monthYear: targetMonthYear }
-    })
-
-    if (existingVotes >= MAX_VOTES) {
-      return NextResponse.json({ error: `You have already used all ${MAX_VOTES} votes` }, { status: 400 })
-    }
-
     // Check if already voted for this collection
     const existingVote = await prisma.vote.findFirst({
       where: { userId: dbUser.id, collectionId, monthYear: targetMonthYear }
     })
 
     if (existingVote) {
-      return NextResponse.json({ error: 'You have already voted for this collection' }, { status: 400 })
+      // Remove the vote (toggle off)
+      await prisma.vote.delete({
+        where: { id: existingVote.id }
+      })
+
+      const remainingVotes = await prisma.vote.count({
+        where: { userId: dbUser.id, monthYear: targetMonthYear }
+      })
+
+      return NextResponse.json({ 
+        success: true, 
+        action: 'removed',
+        votesRemaining: MAX_VOTES - remainingVotes,
+        voteCount: remainingVotes
+      })
     }
 
-    // Create vote
+    // Check vote count before adding new vote
+    const existingVoteCount = await prisma.vote.count({
+      where: { userId: dbUser.id, monthYear: targetMonthYear }
+    })
+
+    if (existingVoteCount >= MAX_VOTES) {
+      return NextResponse.json({ error: `You have already used all ${MAX_VOTES} votes. Remove a vote first.` }, { status: 400 })
+    }
+
+    // Create vote (toggle on)
     const vote = await prisma.vote.create({
       data: {
         userId: dbUser.id,
@@ -76,9 +90,15 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    return NextResponse.json({ success: true, vote, votesRemaining: MAX_VOTES - existingVotes - 1 })
+    return NextResponse.json({ 
+      success: true, 
+      action: 'added',
+      vote, 
+      votesRemaining: MAX_VOTES - existingVoteCount - 1,
+      voteCount: existingVoteCount + 1
+    })
   } catch (error) {
-    console.error('Error creating vote:', error)
-    return NextResponse.json({ error: 'Failed to create vote' }, { status: 500 })
+    console.error('Error toggling vote:', error)
+    return NextResponse.json({ error: 'Failed to toggle vote' }, { status: 500 })
   }
 }
