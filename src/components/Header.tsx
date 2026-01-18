@@ -68,6 +68,12 @@ export function Header() {
             >
               Home
             </Link>
+            <Link 
+              href="/history" 
+              className="text-movement-gray-300 hover:text-white transition-colors font-medium"
+            >
+              History
+            </Link>
             {user?.isAdmin && (
               <Link 
                 href="/admin" 
@@ -143,6 +149,13 @@ export function Header() {
               onClick={() => setMobileMenuOpen(false)}
             >
               Home
+            </Link>
+            <Link 
+              href="/history" 
+              className="block px-4 py-3 text-movement-gray-300 hover:text-white hover:bg-movement-gray-800 rounded-lg transition-all"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              History
             </Link>
             {user?.isAdmin && (
               <Link 
