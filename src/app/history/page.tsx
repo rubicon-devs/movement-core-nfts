@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { Header } from '@/components/Header'
 import { motion } from 'framer-motion'
 import { 
@@ -52,7 +52,6 @@ export default function HistoryPage() {
   const [topFilter, setTopFilter] = useState(10)
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null)
   const [hiddenCollections, setHiddenCollections] = useState<Set<string>>(new Set())
-  const chartRef = useRef<ChartJS<'line'>>(null)
 
   useEffect(() => {
     async function fetchHistory() {
@@ -162,24 +161,21 @@ export default function HistoryPage() {
         titleColor: '#fff',
         bodyColor: '#fff',
         padding: 12,
-        displayColors: true,
-        callbacks: {
-          label: function(context: { dataset: { label: string }, raw: number }) {
-            return `${context.dataset.label}: ${context.raw?.toLocaleString() || 0} votes`
-          }
-        }
+        displayColors: true
       }
     }
   }
 
   // Calculate stats
-  const totalVotes = data?.collections.reduce((acc, col) => {
-    return acc + col.votes.reduce((sum, v) => sum + (v || 0), 0)
+  const totalVotes = data?.collections.reduce((acc: number, col) => {
+    const colVotes = col.votes || []
+    return acc + colVotes.reduce((sum: number, v) => sum + (v || 0), 0)
   }, 0) || 0
 
-  const uniqueCollections = new Set(
-    data?.collections.filter(c => c.votes.some(v => v !== null)).map(c => c.id)
-  ).size
+  const uniqueCollections = data?.collections.filter(c => {
+    const votes = c.votes || []
+    return votes.some(v => v !== null)
+  }).length || 0
 
   if (loading) {
     return (
@@ -273,7 +269,7 @@ export default function HistoryPage() {
 
               {/* Chart */}
               <div className="relative h-[400px]">
-                <Line ref={chartRef} data={chartData} options={chartOptions} />
+                <Line data={chartData} options={chartOptions} />
               </div>
 
               {/* Custom Legend */}
