@@ -38,7 +38,7 @@ interface Collection {
   description: string | null
   twitterUrl: string | null
   tradeportUrl: string | null
-  voteCount: number
+  voteCount: number | null
   hasVoted: boolean
 }
 
@@ -381,7 +381,8 @@ function CollectionCard({
   canVote, 
   userVoteCount, 
   onVote,
-  rank 
+  rank,
+  hideVoteCounts = false
 }: { 
   collection: Collection
   phase: string
@@ -389,6 +390,7 @@ function CollectionCard({
   userVoteCount: number
   onVote: (id: string) => void
   rank?: number
+  hideVoteCounts?: boolean
 }) {
   const [isVoting, setIsVoting] = useState(false)
 
@@ -479,10 +481,16 @@ function CollectionCard({
 
       {phase === 'voting' && (
         <div className="flex items-center justify-between pt-2 border-t border-movement-gray-700">
-          <div className="flex items-center gap-2">
-            <span className="vote-count text-2xl font-bold text-movement-yellow">{collection.voteCount}</span>
-            <span className="text-sm text-movement-gray-500">votes</span>
-          </div>
+          {!hideVoteCounts ? (
+            <div className="flex items-center gap-2">
+              <span className="vote-count text-2xl font-bold text-movement-yellow">{collection.voteCount}</span>
+              <span className="text-sm text-movement-gray-500">votes</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-movement-gray-500">Votes hidden until results</span>
+            </div>
+          )}
           {canVote && (
             <button
               onClick={handleVote}
@@ -521,7 +529,8 @@ export function ClientPage() {
   const [timeRemaining, setTimeRemaining] = useState(0)
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
-  const [sortOrder, setSortOrder] = useState<'votes-desc' | 'votes-asc' | 'name'>('votes-desc')
+  const [sortOrder, setSortOrder] = useState<'votes-desc' | 'votes-asc' | 'name'>('name')
+  const [hideVoteCounts, setHideVoteCounts] = useState(false)
 
   const fetchData = useCallback(async () => {
     try {
@@ -542,6 +551,7 @@ export function ClientPage() {
       setCollections(collectionsData.collections || [])
       setUserVoteCount(collectionsData.userVoteCount || 0)
       setUserSubmission(collectionsData.userSubmission || null)
+      setHideVoteCounts(collectionsData.hideVoteCounts || false)
 
       // Fetch winners if display phase
       if (phaseData.phase === 'display') {
@@ -585,13 +595,13 @@ export function ClientPage() {
         if (data.action === 'added') {
           // Vote was added
           setCollections(prev => prev.map(c => 
-            c.id === collectionId ? { ...c, voteCount: c.voteCount + 1, hasVoted: true } : c
+            c.id === collectionId ? { ...c, voteCount: (c.voteCount || 0) + 1, hasVoted: true } : c
           ))
           setUserVoteCount(prev => prev + 1)
         } else if (data.action === 'removed') {
           // Vote was removed
           setCollections(prev => prev.map(c => 
-            c.id === collectionId ? { ...c, voteCount: c.voteCount - 1, hasVoted: false } : c
+            c.id === collectionId ? { ...c, voteCount: (c.voteCount || 0) - 1, hasVoted: false } : c
           ))
           setUserVoteCount(prev => prev - 1)
         }
@@ -606,8 +616,8 @@ export function ClientPage() {
                  c.contractAddress.toLowerCase().includes(searchQuery.toLowerCase()))
     .sort((a, b) => {
       switch (sortOrder) {
-        case 'votes-desc': return b.voteCount - a.voteCount
-        case 'votes-asc': return a.voteCount - b.voteCount
+        case 'votes-desc': return (b.voteCount || 0) - (a.voteCount || 0)
+        case 'votes-asc': return (a.voteCount || 0) - (b.voteCount || 0)
         case 'name': return a.name.localeCompare(b.name)
         default: return 0
       }
@@ -728,14 +738,16 @@ export function ClientPage() {
                       className="input pl-10"
                     />
                   </div>
-                  <div className="flex items-center gap-2">
-                    <button onClick={() => setSortOrder('votes-desc')} className={`btn-ghost ${sortOrder === 'votes-desc' ? 'text-movement-yellow' : ''}`}>
-                      <SortDesc className="w-4 h-4 mr-1" />Most Votes
-                    </button>
-                    <button onClick={() => setSortOrder('votes-asc')} className={`btn-ghost ${sortOrder === 'votes-asc' ? 'text-movement-yellow' : ''}`}>
-                      <SortAsc className="w-4 h-4 mr-1" />Least Votes
-                    </button>
-                  </div>
+                  {!hideVoteCounts && (
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => setSortOrder('votes-desc')} className={`btn-ghost ${sortOrder === 'votes-desc' ? 'text-movement-yellow' : ''}`}>
+                        <SortDesc className="w-4 h-4 mr-1" />Most Votes
+                      </button>
+                      <button onClick={() => setSortOrder('votes-asc')} className={`btn-ghost ${sortOrder === 'votes-asc' ? 'text-movement-yellow' : ''}`}>
+                        <SortAsc className="w-4 h-4 mr-1" />Least Votes
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -747,6 +759,7 @@ export function ClientPage() {
                       canVote={canVote}
                       userVoteCount={userVoteCount}
                       onVote={handleVote}
+                      hideVoteCounts={hideVoteCounts}
                     />
                   ))}
                 </div>

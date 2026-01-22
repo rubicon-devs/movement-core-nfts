@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/lib/session'
+import { getCurrentPhase } from '@/lib/phase'
 
 export async function GET(request: NextRequest) {
   console.log('=== COLLECTIONS API CALLED ===')
@@ -13,8 +14,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'monthYear required' }, { status: 400 })
     }
 
-    // Get current user session
+    // Get current user session and phase
     const session = await getSession()
+    const phase = await getCurrentPhase()
+
+    // Check if user is admin
+    const isAdmin = session?.isAdmin || false
+
+    // Hide vote counts during voting phase unless admin
+    const hideVoteCounts = phase.phase === 'voting' && !isAdmin
 
     console.log('Fetching submissions for:', monthYear)
 
@@ -75,14 +83,15 @@ export async function GET(request: NextRequest) {
       description: sub.collection.description,
       twitterUrl: sub.collection.twitterUrl,
       tradeportUrl: sub.collection.tradeportUrl,
-      voteCount: sub.collection.votes.length,
+      voteCount: hideVoteCounts ? null : sub.collection.votes.length,
       hasVoted: userVotes.includes(sub.collection.id)
     }))
 
     return NextResponse.json({
       collections,
       userVoteCount: userVotes.length,
-      userSubmission
+      userSubmission,
+      hideVoteCounts
     })
   } catch (error) {
     console.error('Collections error:', error)
