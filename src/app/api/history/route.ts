@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
 // Test data flag - set to false once real data exists
-const USE_TEST_DATA = true
+const USE_TEST_DATA = false
 
 // Test data using real Movement collections from Tradeport
 const TEST_COLLECTIONS = [
