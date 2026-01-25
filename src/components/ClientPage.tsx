@@ -440,7 +440,7 @@ function CollectionCard({
           // eslint-disable-next-line @next/next/no-img-element
           <img 
             src={collection.imageUrl.startsWith('ipfs://') 
-              ? collection.imageUrl.replace('ipfs://', 'https://cloudflare-ipfs.com/ipfs/') 
+              ? collection.imageUrl.replace('ipfs://', 'https://dweb.link/ipfs/') 
               : collection.imageUrl
             } 
             alt={collection.name} 
