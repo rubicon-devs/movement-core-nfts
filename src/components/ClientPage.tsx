@@ -437,16 +437,19 @@ function CollectionCard({
 
       <div className="relative aspect-square rounded-lg overflow-hidden bg-movement-gray-900">
         {collection.imageUrl ? (
-          collection.imageUrl.startsWith('ipfs://') ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img 
-              src={collection.imageUrl.replace('ipfs://', 'https://ipfs.io/ipfs/')} 
-              alt={collection.name} 
-              className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" 
-            />
-          ) : (
-            <Image src={collection.imageUrl} alt={collection.name} fill className="object-cover transition-transform duration-300" sizes="(max-width: 640px) 100vw, 25vw" />
-          )
+          // eslint-disable-next-line @next/next/no-img-element
+          <img 
+            src={collection.imageUrl.startsWith('ipfs://') 
+              ? collection.imageUrl.replace('ipfs://', 'https://cloudflare-ipfs.com/ipfs/') 
+              : collection.imageUrl
+            } 
+            alt={collection.name} 
+            className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.style.display = 'none';
+            }}
+          />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
             <span className="text-4xl text-movement-gray-700">?</span>
