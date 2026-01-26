@@ -10,12 +10,31 @@ import {
 } from '@/lib/discord'
 import { SignJWT } from 'jose'
 
-const JWT_SECRET = new TextEncoder().encode(process.env.NEXTAUTH_SECRET || 'fallback-secret')
+// SECURITY: Never use fallback secret in production
+const JWT_SECRET_STRING = process.env.JWT_SECRET || process.env.NEXTAUTH_SECRET
+if (!JWT_SECRET_STRING && process.env.NODE_ENV === 'production') {
+  throw new Error('JWT_SECRET environment variable is required in production')
+}
+const JWT_SECRET = new TextEncoder().encode(JWT_SECRET_STRING || 'dev-only-fallback-secret')
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const code = searchParams.get('code')
   const error = searchParams.get('error')
+  const state = searchParams.get('state')
+
+  const cookieStore = await cookies()
+
+  // SECURITY: Validate state parameter to prevent CSRF
+  const savedState = cookieStore.get('oauth_state')?.value
+
+  if (savedState && state !== savedState) {
+    console.error('OAuth state mismatch - possible CSRF attack')
+    return NextResponse.redirect(new URL('/?error=invalid_state', request.url))
+  }
+
+  // Clear the state cookie
+  cookieStore.delete('oauth_state')
 
   if (error || !code) {
     return NextResponse.redirect(new URL('/?error=auth_failed', request.url))
@@ -67,18 +86,18 @@ export async function GET(request: NextRequest) {
     hasRequiredRole: hasRequiredRole(roles)
   })
     .setProtectedHeader({ alg: 'HS256' })
-    .setExpirationTime('30d')
+    .setIssuedAt()
+    .setExpirationTime('7d') // SECURITY: 7 day expiration
     .sign(JWT_SECRET)
 
   // Set cookie and redirect
   const response = NextResponse.redirect(new URL('/', request.url))
   
-  const cookieStore = await cookies()
   cookieStore.set('session', token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: 7 * 24 * 60 * 60, // 7 days
     path: '/'
   })
 

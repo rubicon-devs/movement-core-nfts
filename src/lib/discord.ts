@@ -6,13 +6,19 @@ const MOVEMENT_GUILD_ID = process.env.DISCORD_GUILD_ID || ''
 const ADMIN_DISCORD_IDS = process.env.ADMIN_DISCORD_IDS?.split(',').map(id => id.trim()).filter(Boolean) || []
 const ALLOWED_ROLE_IDS = process.env.ALLOWED_ROLE_IDS?.split(',').map(id => id.trim()).filter(Boolean) || []
 
-export function getDiscordAuthUrl(): string {
+// SECURITY: Accept state parameter for CSRF protection
+export function getDiscordAuthUrl(state?: string): string {
   const params = new URLSearchParams({
     client_id: DISCORD_CLIENT_ID,
     redirect_uri: DISCORD_REDIRECT_URI,
     response_type: 'code',
     scope: 'identify email guilds guilds.members.read'
   })
+  
+  if (state) {
+    params.set('state', state)
+  }
+  
   return `https://discord.com/api/oauth2/authorize?${params}`
 }
 
