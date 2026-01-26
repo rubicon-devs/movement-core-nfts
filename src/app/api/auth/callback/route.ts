@@ -28,13 +28,15 @@ export async function GET(request: NextRequest) {
   // SECURITY: Validate state parameter to prevent CSRF
   const savedState = cookieStore.get('oauth_state')?.value
 
-  if (savedState && state !== savedState) {
-    console.error('OAuth state mismatch - possible CSRF attack')
-    return NextResponse.redirect(new URL('/?error=invalid_state', request.url))
+  // Only validate if we have a saved state (handles edge cases)
+  if (savedState) {
+    if (state !== savedState) {
+      console.error('OAuth state mismatch - possible CSRF attack')
+      return NextResponse.redirect(new URL('/?error=invalid_state', request.url))
+    }
+    // Clear the state cookie
+    cookieStore.delete('oauth_state')
   }
-
-  // Clear the state cookie
-  cookieStore.delete('oauth_state')
 
   if (error || !code) {
     return NextResponse.redirect(new URL('/?error=auth_failed', request.url))
@@ -93,7 +95,7 @@ export async function GET(request: NextRequest) {
   // Set cookie and redirect
   const response = NextResponse.redirect(new URL('/', request.url))
   
-  cookieStore.set('session', token, {
+  response.cookies.set('session', token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
