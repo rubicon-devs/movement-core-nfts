@@ -27,7 +27,6 @@ const nextConfig = {
         hostname: 'imagedelivery.net',
         pathname: '/**',
       },
-      // Additional IPFS gateways
       {
         protocol: 'https',
         hostname: 'gateway.pinata.cloud',
@@ -45,7 +44,7 @@ const nextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'cloudflare-ipfs.com',
+        hostname: 'dweb.link',
         pathname: '/**',
       },
       {
@@ -53,13 +52,11 @@ const nextConfig = {
         hostname: 'gateway.ipfs.io',
         pathname: '/**',
       },
-      // Arweave
       {
         protocol: 'https',
         hostname: 'arweave.net',
         pathname: '/**',
       },
-      // Common CDNs
       {
         protocol: 'https',
         hostname: '*.cloudfront.net',
@@ -71,6 +68,39 @@ const nextConfig = {
         pathname: '/**',
       },
     ],
+  },
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'X-DNS-Prefetch-Control',
+            value: 'on'
+          },
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=63072000; includeSubDomains; preload'
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff'
+          },
+          {
+            key: 'X-Frame-Options',
+            value: 'SAMEORIGIN'
+          },
+          {
+            key: 'X-XSS-Protection',
+            value: '1; mode=block'
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin'
+          },
+        ],
+      },
+    ]
   },
 }
 
