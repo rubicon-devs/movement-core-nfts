@@ -111,9 +111,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Collection not found on Tradeport' }, { status: 400 })
     }
 
-    if (!validation.verified) {
-      return NextResponse.json({ error: 'Only verified collections can be submitted' }, { status: 400 })
-    }
+    // TODO: Re-enable verified check after Feb 9, 2026
+    // if (!validation.verified) {
+    //   return NextResponse.json({ error: 'Only verified collections can be submitted' }, { status: 400 })
+    // }
 
     const metadata = validation.metadata!
 
