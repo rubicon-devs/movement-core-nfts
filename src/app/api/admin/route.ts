@@ -3,6 +3,23 @@ import { prisma } from '@/lib/prisma'
 import { getCurrentPhase } from '@/lib/phase'
 import { getSession } from '@/lib/session'
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic'
+
+// Helper to convert data to CSV
+function toCSV(headers: string[], rows: string[][]): string {
+  const escapeField = (field: string) => {
+    if (field.includes(',') || field.includes('"') || field.includes('\n')) {
+      return `"${field.replace(/"/g, '""')}"`
+    }
+    return field
+  }
+  
+  const headerLine = headers.map(escapeField).join(',')
+  const dataLines = rows.map(row => row.map(escapeField).join(','))
+  return [headerLine, ...dataLines].join('\n')
+}
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getSession()
@@ -21,7 +38,6 @@ export async function GET(request: NextRequest) {
         return NextResponse.json(phase)
 
       case 'winners':
-      case 'export-winners':
         if (!monthYear) {
           return NextResponse.json({ error: 'monthYear required' }, { status: 400 })
         }
@@ -32,8 +48,34 @@ export async function GET(request: NextRequest) {
         })
         return NextResponse.json({ winners, monthYear, exportedAt: new Date().toISOString() })
 
+      case 'export-winners':
+        if (!monthYear) {
+          return NextResponse.json({ error: 'monthYear required' }, { status: 400 })
+        }
+        const winnersData = await prisma.winner.findMany({
+          where: { monthYear },
+          include: { collection: true },
+          orderBy: { rank: 'asc' }
+        })
+        
+        const winnersCSV = toCSV(
+          ['rank', 'vote_count', 'collection_name', 'contract_address'],
+          winnersData.map(w => [
+            String(w.rank),
+            String(w.voteCount),
+            w.collection.name,
+            w.collection.contractAddress
+          ])
+        )
+        
+        return new NextResponse(winnersCSV, {
+          headers: {
+            'Content-Type': 'text/csv',
+            'Content-Disposition': `attachment; filename="winners-${monthYear}.csv"`
+          }
+        })
+
       case 'submissions':
-      case 'export-submissions':
         if (!monthYear) {
           return NextResponse.json({ error: 'monthYear required' }, { status: 400 })
         }
@@ -49,11 +91,44 @@ export async function GET(request: NextRequest) {
         })
         return NextResponse.json({ submissions, monthYear, exportedAt: new Date().toISOString() })
 
+      case 'export-submissions':
+        if (!monthYear) {
+          return NextResponse.json({ error: 'monthYear required' }, { status: 400 })
+        }
+        const submissionsData = await prisma.submission.findMany({
+          where: { monthYear },
+          include: {
+            collection: true,
+            user: {
+              select: { id: true, username: true, discordId: true }
+            }
+          },
+          orderBy: { createdAt: 'desc' }
+        })
+        
+        const submissionsCSV = toCSV(
+          ['submission_id', 'submitted_at', 'collection_name', 'username', 'discord_id'],
+          submissionsData.map(s => [
+            s.id,
+            s.createdAt.toISOString(),
+            s.collection.name,
+            s.user.username,
+            s.user.discordId
+          ])
+        )
+        
+        return new NextResponse(submissionsCSV, {
+          headers: {
+            'Content-Type': 'text/csv',
+            'Content-Disposition': `attachment; filename="submissions-${monthYear}.csv"`
+          }
+        })
+
       case 'export-votes':
         if (!monthYear) {
           return NextResponse.json({ error: 'monthYear required' }, { status: 400 })
         }
-        const votes = await prisma.vote.findMany({
+        const votesData = await prisma.vote.findMany({
           where: { monthYear },
           include: {
             collection: { select: { id: true, name: true, contractAddress: true } },
@@ -61,7 +136,24 @@ export async function GET(request: NextRequest) {
           },
           orderBy: { createdAt: 'desc' }
         })
-        return NextResponse.json({ votes, monthYear, exportedAt: new Date().toISOString() })
+        
+        const votesCSV = toCSV(
+          ['vote_id', 'voted_at', 'collection_name', 'username', 'discord_id'],
+          votesData.map(v => [
+            v.id,
+            v.createdAt.toISOString(),
+            v.collection.name,
+            v.user.username,
+            v.user.discordId
+          ])
+        )
+        
+        return new NextResponse(votesCSV, {
+          headers: {
+            'Content-Type': 'text/csv',
+            'Content-Disposition': `attachment; filename="votes-${monthYear}.csv"`
+          }
+        })
 
       case 'export-all':
         if (!monthYear) {
@@ -88,12 +180,47 @@ export async function GET(request: NextRequest) {
             orderBy: { rank: 'asc' }
           })
         ])
-        return NextResponse.json({
-          submissions: allSubmissions,
-          votes: allVotes,
-          winners: allWinners,
-          monthYear,
-          exportedAt: new Date().toISOString()
+        
+        // Create combined CSV with sections
+        const allSubmissionsCSV = toCSV(
+          ['submission_id', 'submitted_at', 'collection_name', 'username', 'discord_id'],
+          allSubmissions.map(s => [
+            s.id,
+            s.createdAt.toISOString(),
+            s.collection.name,
+            s.user.username,
+            s.user.discordId
+          ])
+        )
+        
+        const allVotesCSV = toCSV(
+          ['vote_id', 'voted_at', 'collection_name', 'username', 'discord_id'],
+          allVotes.map(v => [
+            v.id,
+            v.createdAt.toISOString(),
+            v.collection.name,
+            v.user.username,
+            v.user.discordId
+          ])
+        )
+        
+        const allWinnersCSV = toCSV(
+          ['rank', 'vote_count', 'collection_name', 'contract_address'],
+          allWinners.map(w => [
+            String(w.rank),
+            String(w.voteCount),
+            w.collection.name,
+            w.collection.contractAddress
+          ])
+        )
+        
+        const combinedCSV = `=== SUBMISSIONS ===\n${allSubmissionsCSV}\n\n=== VOTES ===\n${allVotesCSV}\n\n=== WINNERS ===\n${allWinnersCSV}`
+        
+        return new NextResponse(combinedCSV, {
+          headers: {
+            'Content-Type': 'text/csv',
+            'Content-Disposition': `attachment; filename="all-data-${monthYear}.csv"`
+          }
         })
 
       case 'stats':
