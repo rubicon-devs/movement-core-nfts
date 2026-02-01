@@ -256,12 +256,11 @@ export default function AdminPage() {
       const monthYear = phase?.monthYear || format(new Date(), 'yyyy-MM')
       const response = await fetch(`/api/admin?action=export-${type}&monthYear=${monthYear}`)
       if (response.ok) {
-        const data = await response.json()
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+        const blob = await response.blob()
         const url = URL.createObjectURL(blob)
         const a = document.createElement('a')
         a.href = url
-        a.download = `${type}-${monthYear}.json`
+        a.download = `${type}-${monthYear}.csv`
         a.click()
         URL.revokeObjectURL(url)
         showMessage('success', `Exported ${type} successfully`)
