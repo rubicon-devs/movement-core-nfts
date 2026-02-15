@@ -468,7 +468,7 @@ export default function AdminPage() {
 
               <section className="card p-6">
                 <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2"><Trophy className="w-5 h-5 text-movement-yellow" />Winner Calculation</h2>
-                <p className="text-movement-gray-400 mb-4">Calculate the top 15 collections by vote count.</p>
+                <p className="text-movement-gray-400 mb-4">Calculate the top 50 collections by vote count.</p>
                 <button onClick={handleCalculateWinners} disabled={actionLoading === 'calculate-winners'} className="btn-primary w-full flex items-center justify-center gap-2">{actionLoading === 'calculate-winners' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trophy className="w-4 h-4" />}Calculate Winners for {phase?.monthLabel}</button>
               </section>
 

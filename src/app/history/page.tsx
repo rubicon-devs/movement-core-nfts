@@ -100,7 +100,7 @@ export default function HistoryPage() {
       }))
       .filter(col => col.currentVotes > 0)
       .sort((a, b) => b.currentVotes - a.currentVotes)
-      .slice(0, 15)
+      .slice(0, 50)
   }
 
   const chartData = {
@@ -250,6 +250,8 @@ export default function HistoryPage() {
                   <option value={5}>Top 5</option>
                   <option value={10}>Top 10</option>
                   <option value={15}>Top 15</option>
+                  <option value={25}>Top 25</option>
+                  <option value={50}>Top 50</option>
                 </select>
               </div>
             )}

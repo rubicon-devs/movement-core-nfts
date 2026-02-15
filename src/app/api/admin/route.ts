@@ -285,7 +285,7 @@ export async function POST(request: NextRequest) {
 
     switch (action) {
       case 'calculate-winners': {
-        const { monthYear, topN = 15 } = body
+        const { monthYear, topN = 50 } = body
         
         if (!monthYear) {
           return NextResponse.json({ error: 'monthYear required' }, { status: 400 })
