@@ -561,7 +561,7 @@ export function ClientPage() {
         const winnersRes = await fetch(`/api/winners?monthYear=${phaseData.monthYear}`)
         if (winnersRes.ok) {
           const winnersData = await winnersRes.json()
-          setWinners(winnersData.winners || [])
+          setWinners((winnersData.winners || []).slice(0, 15))
         }
       }
     } catch (error) {
