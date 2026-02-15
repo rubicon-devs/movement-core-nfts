@@ -276,6 +276,16 @@ export default function HistoryPage() {
 
               {/* Custom Legend */}
               <div className="flex flex-wrap gap-2 mt-6 pt-4 border-t border-movement-gray-800">
+                <button
+                  onClick={() => {
+                    const visibleIds = (data?.collections || []).slice(0, topFilter).map(c => c.id)
+                    const allHidden = visibleIds.every(id => hiddenCollections.has(id))
+                    setHiddenCollections(allHidden ? new Set() : new Set(visibleIds))
+                  }}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium text-movement-gray-400 hover:text-white hover:bg-movement-gray-800 transition-all border border-movement-gray-700"
+                >
+                  {(data?.collections || []).slice(0, topFilter).every(c => hiddenCollections.has(c.id)) ? 'Select All' : 'Deselect All'}
+                </button>
                 {data?.collections.slice(0, topFilter).map(col => (
                   <button
                     key={col.id}
