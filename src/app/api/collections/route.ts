@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma'
 import { getSession } from '@/lib/session'
 import { getCurrentPhase } from '@/lib/phase'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
   console.log('=== COLLECTIONS API CALLED ===')
   

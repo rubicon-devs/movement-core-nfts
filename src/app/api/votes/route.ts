@@ -42,6 +42,10 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
+    // TODO: Add rate limiting. Vercel serverless functions are stateless, so
+    // proper rate limiting requires external state (Redis/Upstash). At current
+    // community scale, DB uniqueness constraints provide sufficient abuse protection.
+
     const { collectionId, monthYear } = body
     const targetMonthYear = monthYear || phase.monthYear
 
@@ -49,55 +53,54 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Collection ID is required' }, { status: 400 })
     }
 
-    // Check if already voted for this collection
-    const existingVote = await prisma.vote.findFirst({
-      where: { userId: dbUser.id, collectionId, monthYear: targetMonthYear }
-    })
-
-    if (existingVote) {
-      // Remove the vote (toggle off)
-      await prisma.vote.delete({
-        where: { id: existingVote.id }
+    // Use a transaction to prevent race conditions on the 5-vote limit
+    const result = await prisma.$transaction(async (tx) => {
+      // Check if already voted for this collection
+      const existingVote = await tx.vote.findFirst({
+        where: { userId: dbUser.id, collectionId, monthYear: targetMonthYear }
       })
 
-      const remainingVotes = await prisma.vote.count({
+      if (existingVote) {
+        // Remove the vote (toggle off)
+        await tx.vote.delete({ where: { id: existingVote.id } })
+        const remainingVotes = await tx.vote.count({
+          where: { userId: dbUser.id, monthYear: targetMonthYear }
+        })
+        return { action: 'removed', votesRemaining: MAX_VOTES - remainingVotes, voteCount: remainingVotes, vote: null }
+      }
+
+      // Check vote count before adding new vote
+      const existingVoteCount = await tx.vote.count({
         where: { userId: dbUser.id, monthYear: targetMonthYear }
       })
 
-      return NextResponse.json({ 
-        success: true, 
-        action: 'removed',
-        votesRemaining: MAX_VOTES - remainingVotes,
-        voteCount: remainingVotes
+      if (existingVoteCount >= MAX_VOTES) {
+        throw new Error(`VOTE_LIMIT: You have already used all ${MAX_VOTES} votes. Remove a vote first.`)
+      }
+
+      // Create vote
+      const vote = await tx.vote.create({
+        data: { userId: dbUser.id, collectionId, monthYear: targetMonthYear }
       })
-    }
 
-    // Check vote count before adding new vote
-    const existingVoteCount = await prisma.vote.count({
-      where: { userId: dbUser.id, monthYear: targetMonthYear }
-    })
-
-    if (existingVoteCount >= MAX_VOTES) {
-      return NextResponse.json({ error: `You have already used all ${MAX_VOTES} votes. Remove a vote first.` }, { status: 400 })
-    }
-
-    // Create vote (toggle on)
-    const vote = await prisma.vote.create({
-      data: {
-        userId: dbUser.id,
-        collectionId,
-        monthYear: targetMonthYear
+      return {
+        action: 'added',
+        vote,
+        votesRemaining: MAX_VOTES - existingVoteCount - 1,
+        voteCount: existingVoteCount + 1
       }
     })
 
-    return NextResponse.json({ 
-      success: true, 
-      action: 'added',
-      vote, 
-      votesRemaining: MAX_VOTES - existingVoteCount - 1,
-      voteCount: existingVoteCount + 1
-    })
+    // Handle vote limit error from transaction
+    if (result === null) {
+      return NextResponse.json({ error: `Vote limit reached` }, { status: 400 })
+    }
+
+    return NextResponse.json({ success: true, ...result })
   } catch (error) {
+    if (error instanceof Error && error.message.startsWith('VOTE_LIMIT:')) {
+      return NextResponse.json({ error: error.message.replace('VOTE_LIMIT: ', '') }, { status: 400 })
+    }
     console.error('Error toggling vote:', error)
     return NextResponse.json({ error: 'Failed to toggle vote' }, { status: 500 })
   }

@@ -14,10 +14,14 @@ function toCSV(headers: string[], rows: string[][]): string {
     }
     return field
   }
-  
+
   const headerLine = headers.map(escapeField).join(',')
   const dataLines = rows.map(row => row.map(escapeField).join(','))
   return [headerLine, ...dataLines].join('\n')
+}
+
+function isValidMonthYear(value: string | null): value is string {
+  return typeof value === 'string' && /^\d{4}-\d{2}$/.test(value)
 }
 
 export async function GET(request: NextRequest) {
@@ -38,8 +42,8 @@ export async function GET(request: NextRequest) {
         return NextResponse.json(phase)
 
       case 'winners':
-        if (!monthYear) {
-          return NextResponse.json({ error: 'monthYear required' }, { status: 400 })
+        if (!isValidMonthYear(monthYear)) {
+          return NextResponse.json({ error: 'monthYear must be in YYYY-MM format' }, { status: 400 })
         }
         const winners = await prisma.winner.findMany({
           where: { monthYear },
@@ -49,8 +53,8 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ winners, monthYear, exportedAt: new Date().toISOString() })
 
       case 'export-winners':
-        if (!monthYear) {
-          return NextResponse.json({ error: 'monthYear required' }, { status: 400 })
+        if (!isValidMonthYear(monthYear)) {
+          return NextResponse.json({ error: 'monthYear must be in YYYY-MM format' }, { status: 400 })
         }
         const winnersData = await prisma.winner.findMany({
           where: { monthYear },
@@ -76,8 +80,8 @@ export async function GET(request: NextRequest) {
         })
 
       case 'submissions':
-        if (!monthYear) {
-          return NextResponse.json({ error: 'monthYear required' }, { status: 400 })
+        if (!isValidMonthYear(monthYear)) {
+          return NextResponse.json({ error: 'monthYear must be in YYYY-MM format' }, { status: 400 })
         }
         const submissions = await prisma.submission.findMany({
           where: { monthYear },
@@ -92,8 +96,8 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ submissions, monthYear, exportedAt: new Date().toISOString() })
 
       case 'export-submissions':
-        if (!monthYear) {
-          return NextResponse.json({ error: 'monthYear required' }, { status: 400 })
+        if (!isValidMonthYear(monthYear)) {
+          return NextResponse.json({ error: 'monthYear must be in YYYY-MM format' }, { status: 400 })
         }
         const submissionsData = await prisma.submission.findMany({
           where: { monthYear },
@@ -125,8 +129,8 @@ export async function GET(request: NextRequest) {
         })
 
       case 'export-votes':
-        if (!monthYear) {
-          return NextResponse.json({ error: 'monthYear required' }, { status: 400 })
+        if (!isValidMonthYear(monthYear)) {
+          return NextResponse.json({ error: 'monthYear must be in YYYY-MM format' }, { status: 400 })
         }
         const votesData = await prisma.vote.findMany({
           where: { monthYear },
@@ -156,8 +160,8 @@ export async function GET(request: NextRequest) {
         })
 
       case 'export-all':
-        if (!monthYear) {
-          return NextResponse.json({ error: 'monthYear required' }, { status: 400 })
+        if (!isValidMonthYear(monthYear)) {
+          return NextResponse.json({ error: 'monthYear must be in YYYY-MM format' }, { status: 400 })
         }
         const [allSubmissions, allVotes, allWinners] = await Promise.all([
           prisma.submission.findMany({
@@ -181,51 +185,40 @@ export async function GET(request: NextRequest) {
           })
         ])
         
-        // Create combined CSV with sections
-        const allSubmissionsCSV = toCSV(
-          ['submission_id', 'submitted_at', 'collection_name', 'username', 'discord_id'],
-          allSubmissions.map(s => [
-            s.id,
-            s.createdAt.toISOString(),
-            s.collection.name,
-            s.user.username,
-            s.user.discordId
-          ])
-        )
-        
-        const allVotesCSV = toCSV(
-          ['vote_id', 'voted_at', 'collection_name', 'username', 'discord_id'],
-          allVotes.map(v => [
-            v.id,
-            v.createdAt.toISOString(),
-            v.collection.name,
-            v.user.username,
-            v.user.discordId
-          ])
-        )
-        
-        const allWinnersCSV = toCSV(
-          ['rank', 'vote_count', 'collection_name', 'contract_address'],
-          allWinners.map(w => [
-            String(w.rank),
-            String(w.voteCount),
-            w.collection.name,
-            w.collection.contractAddress
-          ])
-        )
-        
-        const combinedCSV = `=== SUBMISSIONS ===\n${allSubmissionsCSV}\n\n=== VOTES ===\n${allVotesCSV}\n\n=== WINNERS ===\n${allWinnersCSV}`
-        
-        return new NextResponse(combinedCSV, {
+        return NextResponse.json({
+          monthYear,
+          exportedAt: new Date().toISOString(),
+          submissions: allSubmissions.map(s => ({
+            submission_id: s.id,
+            submitted_at: s.createdAt.toISOString(),
+            collection_name: s.collection.name,
+            contract_address: s.collection.contractAddress,
+            username: s.user.username,
+            discord_id: s.user.discordId
+          })),
+          votes: allVotes.map(v => ({
+            vote_id: v.id,
+            voted_at: v.createdAt.toISOString(),
+            collection_name: v.collection.name,
+            contract_address: v.collection.contractAddress,
+            username: v.user.username,
+            discord_id: v.user.discordId
+          })),
+          winners: allWinners.map(w => ({
+            rank: w.rank,
+            vote_count: w.voteCount,
+            collection_name: w.collection.name,
+            contract_address: w.collection.contractAddress
+          }))
+        }, {
           headers: {
-            'Content-Type': 'text/csv',
-            'Content-Disposition': `attachment; filename="all-data-${monthYear}.csv"`
+            'Content-Disposition': `attachment; filename="all-data-${monthYear}.json"`
           }
         })
 
       case 'stats':
-        if (!monthYear) {
-          return NextResponse.json({ error: 'monthYear required' }, { status: 400 })
+        if (!isValidMonthYear(monthYear)) {
+          return NextResponse.json({ error: 'monthYear must be in YYYY-MM format' }, { status: 400 })
         }
         const [submissionCount, voteCount, uniqueVoters] = await Promise.all([
           prisma.submission.count({ where: { monthYear } }),
@@ -248,8 +241,8 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ blockedUsers })
 
       case 'submissions-list':
-        if (!monthYear) {
-          return NextResponse.json({ error: 'monthYear required' }, { status: 400 })
+        if (!isValidMonthYear(monthYear)) {
+          return NextResponse.json({ error: 'monthYear must be in YYYY-MM format' }, { status: 400 })
         }
         const submissionsList = await prisma.submission.findMany({
           where: { monthYear },
@@ -286,9 +279,9 @@ export async function POST(request: NextRequest) {
     switch (action) {
       case 'calculate-winners': {
         const { monthYear, topN = 50 } = body
-        
-        if (!monthYear) {
-          return NextResponse.json({ error: 'monthYear required' }, { status: 400 })
+
+        if (!isValidMonthYear(monthYear)) {
+          return NextResponse.json({ error: 'monthYear must be in YYYY-MM format' }, { status: 400 })
         }
 
         const submissions = await prisma.submission.findMany({
@@ -310,30 +303,41 @@ export async function POST(request: NextRequest) {
           .sort((a, b) => b.voteCount - a.voteCount)
           .slice(0, topN)
 
+        // Assign ranks with competition ranking (ties get same rank)
+        let currentRank = 1
+        const rankedWinners = sorted.map((s, index) => {
+          if (index > 0 && sorted[index - 1].voteCount !== s.voteCount) {
+            currentRank = index + 1
+          }
+          return { ...s, rank: currentRank }
+        })
+
         await prisma.winner.deleteMany({ where: { monthYear } })
 
-        const winners = await Promise.all(
-          sorted.map((s, index) =>
-            prisma.winner.create({
-              data: {
-                collectionId: s.collectionId,
-                monthYear,
-                rank: index + 1,
-                voteCount: s.voteCount
-              },
-              include: { collection: true }
-            })
-          )
-        )
+        await prisma.winner.createMany({
+          data: rankedWinners.map(s => ({
+            collectionId: s.collectionId,
+            monthYear,
+            rank: s.rank,
+            voteCount: s.voteCount
+          }))
+        })
+
+        // Fetch back with collection data to return
+        const winners = await prisma.winner.findMany({
+          where: { monthYear },
+          include: { collection: true },
+          orderBy: { rank: 'asc' }
+        })
 
         return NextResponse.json({ success: true, winners })
       }
 
       case 'override-phase': {
         const { monthYear, phase, durationHours } = body
-        
-        if (!monthYear || !phase) {
-          return NextResponse.json({ error: 'monthYear and phase required' }, { status: 400 })
+
+        if (!isValidMonthYear(monthYear) || !phase) {
+          return NextResponse.json({ error: 'monthYear must be in YYYY-MM format, phase required' }, { status: 400 })
         }
 
         if (!['submission', 'voting', 'display'].includes(phase)) {
@@ -356,9 +360,9 @@ export async function POST(request: NextRequest) {
 
       case 'clear-override': {
         const { monthYear } = body
-        
-        if (!monthYear) {
-          return NextResponse.json({ error: 'monthYear required' }, { status: 400 })
+
+        if (!isValidMonthYear(monthYear)) {
+          return NextResponse.json({ error: 'monthYear must be in YYYY-MM format' }, { status: 400 })
         }
 
         await prisma.phaseOverride.deleteMany({ where: { monthYear } })
@@ -366,10 +370,13 @@ export async function POST(request: NextRequest) {
       }
 
       case 'clear-data': {
-        const { monthYear, target } = body
-        
-        if (!monthYear) {
-          return NextResponse.json({ error: 'monthYear required' }, { status: 400 })
+        const { monthYear, target, confirm } = body
+
+        if (!isValidMonthYear(monthYear)) {
+          return NextResponse.json({ error: 'monthYear must be in YYYY-MM format' }, { status: 400 })
+        }
+        if (confirm !== true) {
+          return NextResponse.json({ error: 'confirm: true is required for clear-data to prevent accidental deletion' }, { status: 400 })
         }
 
         const deleted: { submissions?: number; votes?: number; winners?: number } = {}

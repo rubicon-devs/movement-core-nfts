@@ -8,14 +8,7 @@ import {
   isAdmin,
   hasRequiredRole
 } from '@/lib/discord'
-import { SignJWT } from 'jose'
-
-// SECURITY: Never use fallback secret in production
-const JWT_SECRET_STRING = process.env.JWT_SECRET || process.env.NEXTAUTH_SECRET
-if (!JWT_SECRET_STRING && process.env.NODE_ENV === 'production') {
-  throw new Error('JWT_SECRET environment variable is required in production')
-}
-const JWT_SECRET = new TextEncoder().encode(JWT_SECRET_STRING || 'dev-only-fallback-secret')
+import { signJWT } from '@/lib/session'
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
@@ -27,16 +20,11 @@ export async function GET(request: NextRequest) {
 
   // SECURITY: Validate state parameter to prevent CSRF
   const savedState = cookieStore.get('oauth_state')?.value
-
-  // Only validate if we have a saved state (handles edge cases)
-  if (savedState) {
-    if (state !== savedState) {
-      console.error('OAuth state mismatch - possible CSRF attack')
-      return NextResponse.redirect(new URL('/?error=invalid_state', request.url))
-    }
-    // Clear the state cookie
-    cookieStore.delete('oauth_state')
+  if (!savedState || state !== savedState) {
+    console.error('OAuth state mismatch or missing - possible CSRF attack')
+    return NextResponse.redirect(new URL('/?error=invalid_state', request.url))
   }
+  cookieStore.delete('oauth_state')
 
   if (error || !code) {
     return NextResponse.redirect(new URL('/?error=auth_failed', request.url))
@@ -78,7 +66,7 @@ export async function GET(request: NextRequest) {
   })
 
   // Create JWT session token
-  const token = await new SignJWT({
+  const token = await signJWT({
     id: user.id,
     discordId: user.discordId,
     username: user.username,
@@ -87,10 +75,6 @@ export async function GET(request: NextRequest) {
     isAdmin: user.isAdmin,
     hasRequiredRole: hasRequiredRole(roles)
   })
-    .setProtectedHeader({ alg: 'HS256' })
-    .setIssuedAt()
-    .setExpirationTime('7d') // SECURITY: 7 day expiration
-    .sign(JWT_SECRET)
 
   // Set cookie and redirect
   const response = NextResponse.redirect(new URL('/', request.url))

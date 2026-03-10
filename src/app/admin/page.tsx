@@ -235,7 +235,7 @@ export default function AdminPage() {
       const response = await fetch('/api/admin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'clear-data', target: clearTarget, monthYear: clearMonthYear })
+        body: JSON.stringify({ action: 'clear-data', target: clearTarget, monthYear: clearMonthYear, confirm: true })
       })
       if (response.ok) {
         showMessage('success', `Cleared ${targetLabel} successfully`)
@@ -256,13 +256,25 @@ export default function AdminPage() {
       const monthYear = phase?.monthYear || format(new Date(), 'yyyy-MM')
       const response = await fetch(`/api/admin?action=export-${type}&monthYear=${monthYear}`)
       if (response.ok) {
-        const blob = await response.blob()
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = `${type}-${monthYear}.csv`
-        a.click()
-        URL.revokeObjectURL(url)
+        if (type === 'all') {
+          const data = await response.json()
+          const jsonStr = JSON.stringify(data, null, 2)
+          const blob = new Blob([jsonStr], { type: 'application/json' })
+          const url = URL.createObjectURL(blob)
+          const a = document.createElement('a')
+          a.href = url
+          a.download = `all-data-${monthYear}.json`
+          a.click()
+          URL.revokeObjectURL(url)
+        } else {
+          const blob = await response.blob()
+          const url = URL.createObjectURL(blob)
+          const a = document.createElement('a')
+          a.href = url
+          a.download = `${type}-${monthYear}.csv`
+          a.click()
+          URL.revokeObjectURL(url)
+        }
         showMessage('success', `Exported ${type} successfully`)
       } else {
         showMessage('error', 'Failed to export data')

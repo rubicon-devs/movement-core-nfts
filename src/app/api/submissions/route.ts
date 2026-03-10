@@ -30,6 +30,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  // TODO: Add rate limiting. Vercel serverless functions are stateless, so
+  // proper rate limiting requires external state (Redis/Upstash). At current
+  // community scale, DB uniqueness constraints provide sufficient abuse protection.
   try {
     const session = await getSession()
 

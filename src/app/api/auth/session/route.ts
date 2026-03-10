@@ -1,14 +1,7 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { jwtVerify } from 'jose'
 import { SessionUser } from '@/lib/discord'
-
-// SECURITY: Use same secret as callback route
-const JWT_SECRET_STRING = process.env.JWT_SECRET || process.env.NEXTAUTH_SECRET
-if (!JWT_SECRET_STRING && process.env.NODE_ENV === 'production') {
-  throw new Error('JWT_SECRET environment variable is required in production')
-}
-const JWT_SECRET = new TextEncoder().encode(JWT_SECRET_STRING || 'dev-only-fallback-secret')
+import { verifyJWT } from '@/lib/session'
 
 export async function GET() {
   try {
@@ -19,8 +12,8 @@ export async function GET() {
       return NextResponse.json({ user: null })
     }
 
-    const { payload } = await jwtVerify(token, JWT_SECRET)
-    
+    const payload = await verifyJWT(token)
+
     const user: SessionUser = {
       id: payload.id as string,
       discordId: payload.discordId as string,

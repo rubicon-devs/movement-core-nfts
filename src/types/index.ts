@@ -52,16 +52,9 @@ export interface AdminStats {
 export interface ExportData {
   winners: (Winner & { collection: Collection })[]
   votes: (Vote & { user: User; collection: Collection })[]
-  loginRecords: {
-    id: string
-    discordId: string
-    username: string
-    timestamp: Date
-    ipAddress: string | null
-  }[]
 }
 
-export type ClearTarget = 'all' | 'submissions' | 'votes' | 'winners' | 'login-records'
+export type ClearTarget = 'all' | 'submissions' | 'votes' | 'winners'
 
 // API Response types
 export interface ApiResponse<T = unknown> {

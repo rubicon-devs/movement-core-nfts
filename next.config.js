@@ -95,6 +95,18 @@ const nextConfig = {
             value: '1; mode=block'
           },
           {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live",
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+              "font-src 'self' https://fonts.gstatic.com",
+              "img-src 'self' data: blob: https://cdn.discordapp.com https://ipfs.io https://*.tradeport.xyz https://tradeport.xyz https://imagedelivery.net https://gateway.pinata.cloud https://*.ipfs.nftstorage.link https://nftstorage.link https://dweb.link https://gateway.ipfs.io https://arweave.net https://*.cloudfront.net https://*.amazonaws.com",
+              "connect-src 'self' https://api.pusher.com wss://*.pusher.com https://sockjs-mt1.pusher.com",
+              "frame-ancestors 'none'",
+            ].join('; ')
+          },
+          {
             key: 'Referrer-Policy',
             value: 'strict-origin-when-cross-origin'
           },
